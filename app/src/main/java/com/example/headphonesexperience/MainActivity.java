@@ -1,19 +1,16 @@
 package com.example.headphonesexperience;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
-import android.media.projection.MediaProjectionManager;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
-import android.graphics.Color;
 import android.view.Gravity;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 public class MainActivity extends Activity {
-    private static final int REQUEST_CAPTURE = 42;
     private LinearLayout root;
 
     @Override public void onCreate(Bundle savedInstanceState) {
@@ -50,14 +47,14 @@ public class MainActivity extends Activity {
     private void showHome() {
         base();
         root.addView(text("LIVE AUDIO", 30));
-        TextView sub = text("No uploads. No files.\nProcess audio already playing on your phone.", 17);
+        TextView sub = text("No uploads. No files.\nNo audio duplication.\nControl the output effects.", 17);
         sub.setTextColor(Color.LTGRAY);
         root.addView(sub);
 
         Button start = button("ACTIVATE");
-        start.setOnClickListener(v -> requestCapture());
+        start.setOnClickListener(v -> startEffects());
 
-        TextView note = text("One Android permission. Then play audio in another app.", 13);
+        TextView note = text("No capture permission. No second audio stream.", 13);
         note.setTextColor(Color.GRAY);
         root.addView(note);
     }
@@ -65,7 +62,7 @@ public class MainActivity extends Activity {
     private void showControls() {
         base();
         root.addView(text("LIVE AUDIO", 30));
-        TextView status = text("The audio layer is active.\nYou can leave this screen and keep listening.", 16);
+        TextView status = text("Output effects are active.\nLeave this screen and keep listening.", 16);
         status.setTextColor(Color.LTGRAY);
         root.addView(status);
 
@@ -87,40 +84,40 @@ public class MainActivity extends Activity {
         b.setOnClickListener(v -> sendEffect(effect));
     }
 
-    private void requestCapture() {
-        if (Build.VERSION.SDK_INT < 29) return;
-        MediaProjectionManager manager =
-                (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-        startActivityForResult(manager.createScreenCaptureIntent(), REQUEST_CAPTURE);
-    }
+    private void startEffects() {
+        Intent service = new Intent(this, AudioService.class);
+        service.setAction(AudioService.ACTION_START);
 
-    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_CAPTURE && resultCode == RESULT_OK && data != null) {
-            Intent service = new Intent(this, AudioService.class);
-            service.setAction(AudioService.ACTION_START);
-            service.putExtra(AudioService.EXTRA_RESULT_CODE, resultCode);
-            service.putExtra(AudioService.EXTRA_DATA, data);
-            if (Build.VERSION.SDK_INT >= 26) {
-                startForegroundService(service);
-            } else {
-                startService(service);
-            }
-            showControls();
+        if (Build.VERSION.SDK_INT >= 26) {
+            startForegroundService(service);
+        } else {
+            startService(service);
         }
+
+        showControls();
     }
 
     private void sendEffect(int effect) {
         Intent service = new Intent(this, AudioService.class);
         service.setAction(AudioService.ACTION_EFFECT);
         service.putExtra(AudioService.EXTRA_EFFECT, effect);
-        startService(service);
+
+        if (Build.VERSION.SDK_INT >= 26) {
+            startForegroundService(service);
+        } else {
+            startService(service);
+        }
     }
 
     private void sendStop() {
         Intent service = new Intent(this, AudioService.class);
         service.setAction(AudioService.ACTION_STOP);
-        startService(service);
+
+        if (Build.VERSION.SDK_INT >= 26) {
+            startForegroundService(service);
+        } else {
+            startService(service);
+        }
     }
 
     @Override protected void onDestroy() {
