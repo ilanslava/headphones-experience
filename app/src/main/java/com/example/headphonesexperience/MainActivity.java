@@ -10,6 +10,7 @@ import android.media.audiofx.Equalizer;
 import android.media.audiofx.LoudnessEnhancer;
 import android.media.audiofx.PresetReverb;
 import android.media.audiofx.Virtualizer;
+import android.media.audiofx.EnvironmentalReverb;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -32,6 +33,7 @@ public class MainActivity extends Activity {
     private TextView nowTitle, nowState;
     private Handler handler = new Handler();
     private float pan = 0f;
+    private EnvironmentalReverb environmentReverb;
 
     private final int bg=Color.rgb(8,8,10), panel=Color.rgb(20,20,24), panel2=Color.rgb(27,27,32);
     private final int text=Color.WHITE, muted=Color.rgb(165,165,176), accent=Color.rgb(225,225,235);
@@ -191,22 +193,22 @@ public class MainActivity extends Activity {
             bassBoost.setStrength((short)500);
         }catch(Exception ignored){}
         try{
-            reverb=new PresetReverb(0,session); reverb.setPreset(PresetReverb.PRESET_LARGEHALL); reverb.setEnabled(reverbOn);
+            reverb=new PresetReverb(0,session); reverb.setPreset(PresetReverb.PRESET_LARGEHALL); reverb.setEnabled(false);
         }catch(Exception ignored){}
         try{
-            virtualizer=new Virtualizer(0,session); virtualizer.setStrength((short)700); virtualizer.setEnabled(spatialOn);
+            virtualizer=new Virtualizer(0,session); virtualizer.setStrength((short)1000); virtualizer.setEnabled(false);
         }catch(Exception ignored){}
         try{
-            loudness=new LoudnessEnhancer(session); loudness.setTargetGain(450); loudness.setEnabled(loudnessOn);
+            loudness=new LoudnessEnhancer(session); loudness.setTargetGain(800); loudness.setEnabled(false);
         }catch(Exception ignored){}
         try{
             equalizer=new Equalizer(0,session); equalizer.setEnabled(true);
         }catch(Exception ignored){}
     }
 
-    private void toggleSpatial(){ spatialOn=!spatialOn; if(virtualizer!=null)virtualizer.setEnabled(spatialOn); Toast.makeText(this,spatialOn?"Spatial ON":"Spatial OFF",Toast.LENGTH_SHORT).show(); effects(); }
-    private void toggleReverb(){ reverbOn=!reverbOn; if(reverb!=null)reverb.setEnabled(reverbOn); Toast.makeText(this,reverbOn?"Reverb ON":"Reverb OFF",Toast.LENGTH_SHORT).show(); effects(); }
-    private void toggleLoudness(){ loudnessOn=!loudnessOn; if(loudness!=null)loudness.setEnabled(loudnessOn); Toast.makeText(this,loudnessOn?"Loudness ON":"Loudness OFF",Toast.LENGTH_SHORT).show(); effects(); }
+    private void toggleSpatial(){ spatialOn=!spatialOn; if(virtualizer!=null) { try { virtualizer.setStrength((short)(spatialOn?1000:0)); virtualizer.setEnabled(spatialOn); } catch(Exception ignored){} } Toast.makeText(this,spatialOn?"Spatial ON":"Spatial OFF",Toast.LENGTH_SHORT).show(); effects(); }
+    private void toggleReverb(){ reverbOn=!reverbOn; if(reverb!=null) { try { reverb.setPreset(reverbOn?PresetReverb.PRESET_LARGEHALL:PresetReverb.PRESET_NONE); reverb.setEnabled(reverbOn); } catch(Exception ignored){} } Toast.makeText(this,reverbOn?"Reverb ON":"Reverb OFF",Toast.LENGTH_SHORT).show(); effects(); }
+    private void toggleLoudness(){ loudnessOn=!loudnessOn; if(loudness!=null) { try { loudness.setTargetGain((loudnessOn?1200:0)); loudness.setEnabled(loudnessOn); } catch(Exception ignored){} } Toast.makeText(this,loudnessOn?"Loudness ON":"Loudness OFF",Toast.LENGTH_SHORT).show(); effects(); }
 
     private void toggle8D(){
         eightDOn=!eightDOn;
